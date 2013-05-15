@@ -49,9 +49,9 @@ function Dot(context) {
     if (!context)
         throw new Error("empty context");
 
-    this.speed = 50;
+    this.speed = 100;
 
-    this.rho = 0.01;
+    this.rho = 0;
     this.theta = 0;
 
     this.checkpoints = [];
@@ -73,44 +73,33 @@ function Dot(context) {
         this.prev_y = this.y;
     };
 
-    this.setNextCheckpoint = function (checkpoint) {
-        if (checkpoint) {
-            this.nextCheckpoint = checkpoint;
-            this.changeDirection(this.nextCheckpoint);
-        } else {
-            this.nextCheckpoint = null;
-        }
+    this.erase = function () {
+        this.context.clearRect(
+            this.prev_x - this.radius - 1,
+            this.prev_y - this.radius - 1,
+            this.radius * 2 + 3,
+            this.radius * 2 + 3
+        );
     };
 
     this.recalculate = function () {
         if (this.checkpoints.length === 0 && this.nextCheckpoint === null)
             return;
 
-        // || means that we are close enough (x+-1 or y+-1)
-        if (this.nextCheckpoint.x === Math.floor(this.x) && this.nextCheckpoint.y === Math.floor(this.y)) {
+        console.log(this.rho);
+        // we are close enough (x+-1 or y+-1)
+        if (this.rho <= 0) {
             this.setNextCheckpoint(this.checkpoints.shift());
         }
 
-        var dx = this.speed * this.rho * Math.cos(this.theta);
-        var dy = this.speed * this.rho * Math.sin(this.theta);
+        var distance = this.speed / 100;
+
+        this.rho -= distance;
+        var dx = distance * Math.cos(this.theta);
+        var dy = distance * Math.sin(this.theta);
 
         this.x += dx;
         this.y += dy;
-    };
-
-    this.erase = function () {
-        this.context.clearRect(
-            this.prev_x - this.radius - 1,
-            this.prev_y - this.radius - 1,
-            this.radius * 2 + 2,
-            this.radius * 2 + 2
-        );
-    };
-
-    this.setDestination = function (destination) {
-        // TODO add collision solver here
-        this.checkpoints.push(destination);
-        this.setNextCheckpoint(this.checkpoints.shift());
     };
 
     this.changeDirection = function (position) {
@@ -132,7 +121,28 @@ function Dot(context) {
         } else {
             throw new Error("Unexpected value of x,y");
         }
-    }
+    };
+
+    this.setNextCheckpoint = function (checkpoint) {
+        if (checkpoint) {
+            this.nextCheckpoint = checkpoint;
+            this.changeDirection(this.nextCheckpoint);
+            console.log(this.nextCheckpoint);
+
+            var dx = this.x - this.nextCheckpoint.x;
+            var dy = this.y - this.nextCheckpoint.y;
+
+            this.rho = Math.sqrt(Math.pow(dx,2) + Math.pow(dy,2));
+        } else {
+            this.nextCheckpoint = null;
+        }
+    };
+
+    this.setDestination = function (destination) {
+        // TODO add collision solver here
+        this.checkpoints.push(destination);
+        this.setNextCheckpoint(this.checkpoints.shift());
+    };
 }
 
 /* returns coordinates of cursor over canvas element */
@@ -164,11 +174,11 @@ canvas.addEventListener("click", canvasOnClick, false);
 var dot = new Dot(context);
 var dot2 = new Dot(context);
 dot2.y = 100;
-dot2.speed = dot2.speed + 10;
+dot2.speed += 1;
 dot2.setDestination({"x": 730, "y": 800});
 var dot3 = new Dot(context);
 dot3.y = 150;
-dot3.speed = 100;
+dot3.speed += 2;
 dot3.setDestination({"x": 600, "y": 900});
 
 var objects = [];
@@ -184,13 +194,13 @@ function draw() {
 }
 
 function process() {
-    for (var i = 0, len = objects.length; i < len; i++) {
+    for (var i = 0; i < objects.length; i++) {
         objects[i].recalculate();
 
         if (window.innerWidth < objects[i].x || objects[i].x < 0)
-            objects.splice(i);
+            objects.splice(i,1);
         else if (window.innerHeight < objects[i].y || objects[i].y < 0)
-            objects.splice(i);
+            objects.splice(i,1);
     }
 }
 
