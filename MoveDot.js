@@ -93,8 +93,12 @@ function Dot(context) {
         }
 
         var distance = this.speed / 100;
+        if (distance > this.rho )
+            distance = this.rho;
 
         this.rho -= distance;
+
+
         var dx = distance * Math.cos(this.theta);
         var dy = distance * Math.sin(this.theta);
 
