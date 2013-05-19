@@ -1,0 +1,38 @@
+/* to remove the top and left whitespace */
+* {
+    margin:0;
+    padding:0;
+}
+
+/* just to be sure these are full screen*/
+html, body {
+    width:100%;
+    height:100%;
+}
+
+canvas {
+    display: block;
+}
+
+.layer {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#screen {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    opacity: 1;
+}
+
+#characters-layer {
+    z-index: 2;
+}
+
+#stage-layer {
+    z-index: 1;
+}

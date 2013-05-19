@@ -6,12 +6,29 @@
  * To change this template use File | Settings | File Templates.
  */
 
-var canvas = document.getElementById("canvas");
+var screen = document.getElementById("screen");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+var canvases = { charactersCanvas: document.getElementById("characters-layer"),
+    stageCanvas: document.getElementById("stage-layer")
+};
 
-var context = canvas.getContext("2d");
+(function () {
+    function resizeCanvas() {
+        for (var canvas in canvases) {
+            canvases[canvas].width = window.innerWidth;
+            canvases[canvas].height = window.innerHeight;
+            console.log(canvases[canvas].width, canvases[canvas].height);
+        }
+    }
+
+    resizeCanvas();
+    // resize the canvas to fill browser window dynamically
+    window.addEventListener('resize', resizeCanvas, false);
+})();
+
+var contexts = { charactersContext: canvases.charactersCanvas.getContext("2d"),
+    stageContext: canvases.stageCanvas.getContext("2d")
+};
 
 function brezenhamLine(x0, y0, x1, y1) {
     console.log(x0, y0, x1, y1);
@@ -23,7 +40,7 @@ function brezenhamLine(x0, y0, x1, y1) {
 
     var points = [];
     while (true) {
-        points.push({"x":x0,"y":y0});
+        points.push({"x": x0, "y": y0});
 
         if ((x0 == x1) && (y0 == y1)) {
             break;
@@ -41,118 +58,11 @@ function brezenhamLine(x0, y0, x1, y1) {
     return points;
 }
 
-function Dot(context) {
-    this.x = 50;
-    this.y = 50;
-    this.radius = 5;
-    this.color = "rgb(200,0,0)";
-    if (!context)
-        throw new Error("empty context");
-
-    this.speed = 100;
-
-    this.rho = 0;
-    this.theta = 0;
-
-    this.checkpoints = [];
-    this.nextCheckpoint = null;
-
-    this.context = context;
-
-    this.prev_x = null;
-    this.prev_y = null;
-
-    this.draw = function () {
-        this.context.fillStyle = this.color;
-        this.context.beginPath();
-        this.context.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
-        this.context.stroke();
-        this.context.fill();
-
-        this.prev_x = this.x;
-        this.prev_y = this.y;
-    };
-
-    this.erase = function () {
-        this.context.clearRect(
-            this.prev_x - this.radius - 1,
-            this.prev_y - this.radius - 1,
-            this.radius * 2 + 3,
-            this.radius * 2 + 3
-        );
-    };
-
-    this.recalculate = function () {
-        if (this.checkpoints.length === 0 && this.nextCheckpoint === null)
-            return;
-
-        console.log(this.rho);
-        // we are close enough (x+-1 or y+-1)
-        if (this.rho <= 0) {
-            this.setNextCheckpoint(this.checkpoints.shift());
-        }
-
-        var distance = this.speed / 100;
-        if (distance > this.rho )
-            distance = this.rho;
-
-        this.rho -= distance;
-
-
-        var dx = distance * Math.cos(this.theta);
-        var dy = distance * Math.sin(this.theta);
-
-        this.x += dx;
-        this.y += dy;
-    };
-
-    this.changeDirection = function (position) {
-        var x = position.x - this.x;
-        var y = position.y - this.y;
-
-        if (x > 0 && y >= 0) {
-            this.theta = Math.atan(y / x);
-        } else if (x > 0 && y < 0) {
-            this.theta = Math.atan(y / x) + 2 * Math.PI;
-        } else if (x < 0) {
-            this.theta = Math.atan(y / x) + Math.PI;
-        } else if (x === 0 && y > 0) {
-            this.theta = Math.PI / 2;
-        } else if (x === 0 && y < 0) {
-            this.theta = 3 * Math.PI / 2;
-        } else if (x === 0 && y === 0) {
-            this.theta = 0;
-        } else {
-            throw new Error("Unexpected value of x,y");
-        }
-    };
-
-    this.setNextCheckpoint = function (checkpoint) {
-        if (checkpoint) {
-            this.nextCheckpoint = checkpoint;
-            this.changeDirection(this.nextCheckpoint);
-            console.log(this.nextCheckpoint);
-
-            var dx = this.x - this.nextCheckpoint.x;
-            var dy = this.y - this.nextCheckpoint.y;
-
-            this.rho = Math.sqrt(Math.pow(dx,2) + Math.pow(dy,2));
-        } else {
-            this.nextCheckpoint = null;
-        }
-    };
-
-    this.setDestination = function (destination) {
-        // TODO add collision solver here
-        this.checkpoints.push(destination);
-        this.setNextCheckpoint(this.checkpoints.shift());
-    };
-}
-
 /* returns coordinates of cursor over canvas element */
 function getCursorPosition(e) {
-    var x;
-    var y;
+    var x, y;
+    var canvas = e.target;
+
     if (e.pageX != undefined && e.pageY != undefined) {
         x = e.pageX;
         y = e.pageY;
@@ -164,31 +74,42 @@ function getCursorPosition(e) {
     x -= canvas.offsetLeft;
     y -= canvas.offsetTop;
 
-    return {"x": x, "y": y};
+    var point = {"x": x, "y": y};
+
+    return point;
+}
+
+function screenOnClick() {
+    for (var canvas in canvases) {
+        canvases[canvas].onclick();
+    }
 }
 
 function canvasOnClick(e) {
     var clickPosition = getCursorPosition(e);
-    //brezenhamLine(dot.x, dot.y, clickPosition.x, clickPosition.y);
     dot.setDestination(clickPosition);
 }
 
-canvas.addEventListener("click", canvasOnClick, false);
+//screen.addEventListener("click", screenOnClick, false);
+canvases.charactersCanvas.addEventListener("click", canvasOnClick, false);
 
-var dot = new Dot(context);
-var dot2 = new Dot(context);
-dot2.y = 100;
-dot2.speed += 1;
-dot2.setDestination({"x": 730, "y": 800});
-var dot3 = new Dot(context);
-dot3.y = 150;
-dot3.speed += 2;
-dot3.setDestination({"x": 600, "y": 900});
+var dot = new Dot(contexts.charactersContext);
+//var dot2 = new Dot(contexts.charactersContext);
+//dot2.y = 100;
+//dot2.speed += 1;
+//dot2.setDestination({"x": 730, "y": 800});
+//var dot3 = new Dot(contexts.charactersContext);
+//dot3.y = 150;
+//dot3.speed += 2;
+//dot3.setDestination({"x": 600, "y": 900});
 
 var objects = [];
 objects.push(dot);
-objects.push(dot2);
-objects.push(dot3);
+//objects.push(dot2);
+//objects.push(dot3);
+
+var grid = new Grid(contexts.stageContext);
+grid.draw();
 
 function draw() {
     for (var i = 0, len = objects.length; i < len; i++) {
@@ -202,9 +123,9 @@ function process() {
         objects[i].recalculate();
 
         if (window.innerWidth < objects[i].x || objects[i].x < 0)
-            objects.splice(i,1);
+            objects.splice(i, 1);
         else if (window.innerHeight < objects[i].y || objects[i].y < 0)
-            objects.splice(i,1);
+            objects.splice(i, 1);
     }
 }
 

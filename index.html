@@ -2,9 +2,15 @@
 <html>
 <head>
     <title>canvas_test</title>
+    <link rel="stylesheet" type="text/css" href="styles.css"/>
 </head>
 <body>
-    <canvas id="canvas"></canvas>
-    <script src="MoveDot.js"></script>
+<div id="screen">
+    <canvas class="layer" id="characters-layer"></canvas>
+    <canvas class="layer" id="stage-layer"></canvas>
+</div>
+<script src="Dot.js"></script>
+<script src="Grid.js"></script>
+<script src="MoveDot.js"></script>
 </body>
 </html>
