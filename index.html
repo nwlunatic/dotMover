@@ -5,12 +5,13 @@
     <link rel="stylesheet" type="text/css" href="styles.css"/>
 </head>
 <body>
-<div id="screen">
-    <canvas class="layer" id="characters-layer"></canvas>
-    <canvas class="layer" id="stage-layer"></canvas>
-</div>
-<script src="Dot.js"></script>
-<script src="Grid.js"></script>
-<script src="MoveDot.js"></script>
+    <div id="container">
+        <script src="libs/kinetic-v5.0.1.min.js"></script>
+        <script src="utils/utils.js"></script>
+        <script src="pathfind/bfs.js"></script>
+        <script src="map/map.js"></script>
+        <script src="character/character.js"></script>
+        <script src="main.js"></script>
+    </div>
 </body>
 </html>
