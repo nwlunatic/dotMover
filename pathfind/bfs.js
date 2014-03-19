@@ -9,7 +9,7 @@ BFSMethod.prototype._set_node_visited = function (field, node) {
     field[node.position[1]][node.position[0]] = 'cyan'; // make it visited
 }
 
-BFSMethod.prototype._look_directions = function(field, pos, neighbours_directions) {
+BFSMethod.prototype._find_free_neigbours = function(field, pos, neighbours_directions) {
     var neighbours = [];
     for (var i = 0; i < neighbours_directions.length; i++) {
         var neighbour_col = pos[0] + neighbours_directions[i][0];
@@ -21,7 +21,7 @@ BFSMethod.prototype._look_directions = function(field, pos, neighbours_direction
             continue;
 
         if (field[neighbour_row][neighbour_col] === 0)
-            neighbours.push(new this.Node([neighbour_col, neighbour_row], undefined));
+            neighbours.push([neighbour_col, neighbour_row]);
     }
     return neighbours;
 }
@@ -30,17 +30,33 @@ BFSMethod.prototype._get_neighbours = function (field, node, with_diagonals) {
     if (typeof (with_diagonals) === 'undefined')
         with_diagonals = false;
 
+    function have_free_side_neighbour(pos, neighbour, side_neighbours){
+        var direction = [neighbour[0] - pos[0], neighbour[1] - pos[1]];
+        var have_horizontal = side_neighbours.map(function(neighbour) {return neighbour[0];}).indexOf(pos[0] + direction[0]) > -1;
+        var have_vertical = side_neighbours.map(function(neighbour) {return neighbour[1];}).indexOf(pos[1] + direction[1]) > -1;
+        return have_horizontal && have_vertical;
+    }
+
     var col = node.position[0];
     var row = node.position[1];
-    var standard_neighbours = [[-1,0],[1,0],[0,-1],[0,1]];
-    var diagonal_neighbours = [[-1,-1],[-1,1],[1,1],[1,-1]];
+    var side_directions = [[-1,0],[1,0],[0,-1],[0,1]];
+    var diagonal_directions = [[-1,-1],[-1,1],[1,1],[1,-1]];
 
-    var neighbours = this._look_directions(field, [col, row], standard_neighbours);
+    var _neighbours = this._find_free_neigbours(field, [col, row], side_directions);
 
     if (with_diagonals) {
-        var diagonal_neighbours = this._look_directions(field, [col, row], diagonal_neighbours);
-        neighbours = neighbours.concat(diagonal_neighbours);
+        var diagonal_neighbours = this._find_free_neigbours(field, [col, row], diagonal_directions);
+        diagonal_neighbours = diagonal_neighbours.filter(function(n){
+            return have_free_side_neighbour(node.position, n, _neighbours);
+        });
+        _neighbours = _neighbours.concat(diagonal_neighbours);
     }
+
+    var neighbours = _neighbours.map(
+        function(neighbour) {return new this.Node(neighbour, undefined);},
+        this
+    );
+    delete _neighbours;
 
     return neighbours;
 }
